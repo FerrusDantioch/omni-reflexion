@@ -12,7 +12,7 @@ Après toute modification d'un fichier **mis en cache** (`index.html`, `css/`,
 `service-worker.js` :
 
 ```js
-const VERSION = 'omni-reflexion-v10';   // → v11
+const VERSION = 'omni-reflexion-v11';   // → v12
 ```
 
 Sans ce changement, le navigateur ne détecte aucun service worker différent, ne

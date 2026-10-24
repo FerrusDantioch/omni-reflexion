@@ -26,7 +26,7 @@
      C'est une regle de securite des navigateurs, pas une limite de ce code.
    ========================================================================== */
 
-const VERSION = 'omni-reflexion-v10';
+const VERSION = 'omni-reflexion-v11';
 
 /* Debuts de nom de NOS caches (« jeux-reflexion- » : ancien nom de
    l'application). Toutes les applications de ferrusdantioch.github.io
