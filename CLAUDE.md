@@ -12,7 +12,7 @@ Après toute modification d'un fichier **mis en cache** (`index.html`, `css/`,
 `service-worker.js` :
 
 ```js
-const VERSION = 'omni-reflexion-v11';   // → v12
+const VERSION = 'omni-reflexion-v12';   // → v13
 ```
 
 Sans ce changement, le navigateur ne détecte aucun service worker différent, ne
@@ -26,6 +26,16 @@ En cas d'**ajout de fichier**, l'inscrire aussi dans la liste
 **Ne pas** incrémenter pour un changement qui ne touche aucun fichier du cache
 (README, LICENSE, `.gitattributes`, `captures/`) : cela imposerait un
 retéléchargement complet à tous les utilisateurs sans raison.
+
+## Nouvelle version : jamais de changement par surprise
+
+Une nouvelle version **attend** un appui sur « Mettre à jour »
+(`#bandeau-mise-a-jour`, sur l'accueil seulement : jamais en pleine partie).
+Ne pas remettre `self.skipWaiting()` dans l'installation de
+`service-worker.js` : il n'est appelé qu'au message `{ type: 'activer' }`.
+Le `fetch` ne cherche que dans le cache de `VERSION`. Limite du
+navigateur : si l'application est complètement fermée, la nouvelle version
+est là à l'ouverture suivante.
 
 ## Tester en local
 
