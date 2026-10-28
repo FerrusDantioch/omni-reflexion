@@ -139,6 +139,22 @@ h1, h2, h3 { margin: 0; font-weight: 650; line-height: 1.25; }
 }
 
 .intro         { margin: 0 0 var(--espace); color: var(--texte-doux); text-align: center; }
+/* Bandeau « nouvelle version prete » (accueil). :not([hidden]) : sinon
+   display: flex annulerait le masquage par l'attribut hidden. */
+.bandeau-mise-a-jour:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 14px;
+  margin: 0 0 var(--espace);
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  text-align: center;
+}
+.bandeau-mise-a-jour p { margin: 0; flex: 1 1 220px; }
+
 .pied-page     { margin-top: 28px; font-size: 0.8rem; color: var(--texte-doux); text-align: center; }
 
 /* Section « A propos », sous le pied de page de l'accueil : discrete, comme lui. */

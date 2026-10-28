@@ -17,16 +17,19 @@
 
    METTRE A JOUR L'APPLICATION
      Il suffit de changer le numero de VERSION ci-dessous. Le navigateur
-     detectera un service worker different, reinstallera tous les fichiers et
-     supprimera l'ancien cache. Sans ce changement de version, les visiteurs
-     continueraient a voir l'ancienne version indefiniment.
+     detectera un service worker different et telechargera tous les fichiers.
+     La nouvelle version ATTEND ensuite que le joueur touche « Mettre a jour »
+     sur l'accueil : rien ne change par surprise (seule exception, fixee par
+     le navigateur : si l'application est completement fermee, la nouvelle
+     version est la a la prochaine ouverture). Sans ce changement de version,
+     les visiteurs continueraient a voir l'ancienne version indefiniment.
 
    IMPORTANT
      Un service worker ne fonctionne que via https:// ou http://localhost.
      C'est une regle de securite des navigateurs, pas une limite de ce code.
    ========================================================================== */
 
-const VERSION = 'omni-reflexion-v11';
+const VERSION = 'omni-reflexion-v12';
 
 /* Debuts de nom de NOS caches (« jeux-reflexion- » : ancien nom de
    l'application). Toutes les applications de ferrusdantioch.github.io
@@ -78,12 +81,18 @@ self.addEventListener('install', function (evenement) {
           return new Request(fichier, { cache: 'reload' });
         }));
       })
-      .then(function () {
-        // Prend la main immediatement au lieu d'attendre la fermeture des
-        // onglets ouverts : la mise a jour est ainsi appliquee tout de suite.
-        return self.skipWaiting();
-      })
   );
+  // Volontairement, PAS de self.skipWaiting() ici : la nouvelle version
+  // attend l'appui sur « Mettre a jour » (voir le message « activer » plus bas).
+});
+
+/* --------------------------------------------------------------------------
+   MESSAGE DE LA PAGE : le joueur a touche « Mettre a jour »
+   --------------------------------------------------------------------------
+   Cette version prend alors le relais ; la page le remarque (evenement
+   « controllerchange ») et se recharge. */
+self.addEventListener('message', function (evenement) {
+  if (evenement.data && evenement.data.type === 'activer') self.skipWaiting();
 });
 
 /* --------------------------------------------------------------------------
@@ -117,6 +126,8 @@ self.addEventListener('activate', function (evenement) {
    C'est la strategie ideale pour une application dont les fichiers ne
    changent que lors des mises a jour : elle est instantanee et fonctionne
    evidemment sans connexion.
+   On ne cherche que dans le cache de CETTE version : pendant qu'une nouvelle
+   version attend, son cache existe deja a cote.
    -------------------------------------------------------------------------- */
 self.addEventListener('fetch', function (evenement) {
   const requete = evenement.request;
@@ -131,7 +142,7 @@ self.addEventListener('fetch', function (evenement) {
   if (url.origin !== self.location.origin) return;
 
   evenement.respondWith(
-    caches.match(requete).then(function (reponseEnCache) {
+    caches.match(requete, { cacheName: NOM_DU_CACHE }).then(function (reponseEnCache) {
       if (reponseEnCache) return reponseEnCache;
 
       return fetch(requete)
@@ -152,7 +163,7 @@ self.addEventListener('fetch', function (evenement) {
           // Hors-ligne et fichier absent du cache. Si l'utilisateur demandait
           // une page, on lui renvoie la page principale de l'application.
           if (requete.mode === 'navigate') {
-            return caches.match('./index.html');
+            return caches.match('./index.html', { cacheName: NOM_DU_CACHE });
           }
           // Sinon, on laisse l'erreur remonter (une image manquante, par ex.).
           return Response.error();

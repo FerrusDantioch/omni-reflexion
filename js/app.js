@@ -294,12 +294,54 @@ const App = (function () {
      fonctionner les jeux, mais pas l'installation ni le cache hors-ligne.
      ====================================================================== */
 
+  /* Nouvelle version : le service worker la telecharge en arriere-plan,
+     puis ATTEND. Rien ne change par surprise (et jamais en pleine partie) :
+     l'accueil propose « Mettre a jour », et c'est le joueur qui choisit. */
+  let inscriptionSw = null;
+  let miseAJourDemandee = false;
+
+  function surveillerMisesAJour(inscription) {
+    inscriptionSw = inscription;
+    // Une version attendait deja (telechargee lors d'une visite precedente).
+    montrerMiseAJour();
+    inscription.addEventListener('updatefound', function () {
+      const nouveau = inscription.installing;
+      if (!nouveau) return;
+      nouveau.addEventListener('statechange', function () {
+        if (nouveau.state === 'installed') montrerMiseAJour();
+      });
+    });
+    // A chaque retour dans l'application, on regarde s'il y a du nouveau.
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') inscription.update().catch(function () {});
+    });
+  }
+
+  function montrerMiseAJour() {
+    // Sans « controller », c'est la toute premiere installation.
+    const prete = !!(inscriptionSw && inscriptionSw.waiting && navigator.serviceWorker.controller);
+    document.getElementById('bandeau-mise-a-jour').hidden = !prete;
+  }
+
+  document.getElementById('bouton-mise-a-jour').addEventListener('click', function () {
+    if (!inscriptionSw || !inscriptionSw.waiting) return;
+    miseAJourDemandee = true;
+    this.disabled = true;
+    inscriptionSw.waiting.postMessage({ type: 'activer' });
+  });
+
   function installerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     // Chemin relatif : l'application fonctionne aussi dans un sous-dossier
     // (par exemple https://mon-site.fr/jeux/).
+    // Ce changement a aussi lieu a la toute premiere installation : on ne
+    // recharge que si le joueur a touche « Mettre a jour ».
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (miseAJourDemandee) location.reload();
+    });
     navigator.serviceWorker.register('./service-worker.js').then(function (enregistrement) {
       console.log('Service worker actif, portee :', enregistrement.scope);
+      surveillerMisesAJour(enregistrement);
     }).catch(function (erreur) {
       console.warn('Service worker non installe :', erreur);
     });
